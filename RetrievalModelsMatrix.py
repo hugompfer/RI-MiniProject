@@ -26,15 +26,12 @@ class RetrievalModelsMatrix:
         
         ## BM25 statistics
 
-        self.tf = tf.
 
-        
     def score_vsm(self, query):
         query_vector = self.vectorizer.transform([query]).toarray()
         query_norm = np.sqrt(np.sum(np.power(query_vector, 2), axis=1))
 
         doc_scores = np.dot(query_vector, self.tfidf.T) / (0.0001 + self.docNorms * query_norm)
-#        doc_scores = np.nan_to_num(doc_scores, 0)
 
         return doc_scores
 
