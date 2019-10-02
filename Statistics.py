@@ -1,26 +1,16 @@
 import numpy as np
-from sklearn.feature_extraction.text import CountVectorizer
 import matplotlib.pyplot as plt
 import simpleparser as parser
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.metrics import precision_recall_curve
-from sklearn.metrics import average_precision_score
-
-import collectionloaders
 import RetrievalModelsMatrix as models
 
 
 class Statistics:
 
     def __init__(self, cranfield):
-        self.verbose = True
         self.bigrams = True
         self.cranfield = cranfield
-        if not self.bigrams:
-            self.vectorizer = CountVectorizer()
-        else:
-            self.vectorizer = CountVectorizer(ngram_range=(1, 2), token_pattern=r'\b\w+\b',
-                                         min_df=1, stop_words={'the', 'is'})
+        self.vectorizer = self.__init_vectorizer()
 
         # Tokenize, stem and remove stop words
         self.corpus = parser.stemCorpus(cranfield.corpus_cranfield['abstract'])
@@ -30,10 +20,19 @@ class Statistics:
         self.tf_cranfield = self.vectorizer.fit_transform(self.corpus).toarray()
         self.models = models.RetrievalModelsMatrix(self.tf_cranfield, self.vectorizer)
 
+    def __init_vectorizer(self):
+        if not self.bigrams:
+            return CountVectorizer()
+        else:
+            return CountVectorizer(ngram_range=(1, 2), token_pattern=r'\b\w+\b',
+                                   min_df=1, stop_words={'the', 'is'})
+
     def calculate(self):
         i = 1
-        map_vsm = 0
         precision_vsm = []
+        average_precisions = []
+        map_vsm = 0
+
         for query in self.cranfield.queries:
             # Parse the query and compute the document scores
             scores = self.models.score_vsm(parser.stemSentence(query))
@@ -43,18 +42,28 @@ class Statistics:
             map_vsm = map_vsm + average_precision
             precision_vsm.append(precision)
 
-            # Some messages...
-            if self.verbose:
-                plt.plot(recall, precision, color='silver', alpha=0.1)
-                print('qid =', i, 'VSM     AP=', average_precision)
-
+            average_precisions.append([i, average_precision])
             i = i + 1
 
         map_vsm = map_vsm / self.cranfield.num_queries
 
-        return precision_vsm, recall, map_vsm
+        return precision_vsm, recall, map_vsm, average_precisions
+
+    def plot_average_precision_table(self, average_precisions):
+        columns = ('Query Id', 'Average precision')
+        table = plt.table(cellText=average_precisions,
+                              colLabels=columns,
+                              loc='center')
+        table.set_fontsize(14)
+        table.scale(1, 2)
+        plt.show()
 
     def plot_precision_recall(self, precision_vsm, recall, map_vsm):
+        for precision in precision_vsm:
+            plt.subplot(2, 1, 1)
+            plt.plot(recall, precision, color='silver', alpha=0.1)
+
+        plt.subplot(2, 1, 2)
         mean_precision = np.mean(precision_vsm, axis=0)
         std_precision = np.std(precision_vsm, axis=0)
 
