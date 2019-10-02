@@ -5,8 +5,7 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.ipynb_checkpoints/Mini-Project-checkpoint.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/.ipynb_checkpoints/Mini-Project-checkpoint.ipynb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Mini-Project.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/Mini-Project.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Statistics.py" beforeDir="false" afterPath="$PROJECT_DIR$/Statistics.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/prec-recall.png" beforeDir="false" afterPath="$PROJECT_DIR$/results/prec-recall.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RetrievalModelsMatrix.py" beforeDir="false" afterPath="$PROJECT_DIR$/RetrievalModelsMatrix.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
