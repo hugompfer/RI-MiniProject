@@ -20,7 +20,7 @@ class RetrievalModelsMatrix:
 
         ## LMD statistics
         self.collection_size = np.sum(self.docLen)
-        self.term_coll_freq_prob = np.divide(self.term_coll_freq / self.collection_size)
+        self.term_coll_freq_prob = np.divide(self.term_coll_freq , self.collection_size)
         self.term_doc_freq_prob = self.tf/np.array(self.docLen)[:, None]
 
         ## LMJM statistics
