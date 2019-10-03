@@ -1,17 +1,15 @@
 import numpy as np
 
-
 class RetrievalModelsMatrix:
 
     def __init__(self, tf, vectorizer):
         self.vectorizer = vectorizer
         self.tf = tf
+        self.term_coll_freq = np.sum(tf, axis=0)
+        self.docLen = np.sum(tf, axis=1) + 1
+        self.term_doc_freq = np.sum(tf != 0, axis=0)
 
         ## VSM statistics
-        self.term_doc_freq = np.sum(tf != 0, axis=0)#term collection freq
-        self.term_coll_freq = np.sum(tf, axis=0) #term collection freq
-        self.docLen = np.sum(tf, axis=1) #document size
-
         idf_value = np.log(np.size(tf, axis = 0) / self.term_doc_freq) 
         self.idf = (idf_value > 0.01) * idf_value
         self.tfidf = np.array(tf * self.idf)
@@ -22,9 +20,12 @@ class RetrievalModelsMatrix:
         self.collection_size = np.sum(self.docLen)
         self.term_coll_freq_prob = np.divide(self.term_coll_freq , self.collection_size)
         self.term_doc_freq_prob = self.tf/np.array(self.docLen)[:, None]
+        miu = 0.5
+        self.lmd_matrix = (self.tf + miu * self.term_coll_freq_prob)/(np.reshape(self.docLen,[np.size(self.docLen),1])+miu)
 
         ## LMJM statistics
-
+        lmd = 500
+        self.lmjm_matrix = lmd * self.term_doc_freq_prob + (1 - lmd) * self.term_coll_freq_prob
         
         ## BM25 statistics
 
@@ -39,12 +40,15 @@ class RetrievalModelsMatrix:
 
     def score_lmd(self, query):
         query_vector = self.vectorizer.transform([query]).toarray()
-        indexes = np.where(query_vector[0] != 0)[0]
+        doc_scores = np.prod(self.lmd_matrix ** query_vector, axis=1)
 
         return doc_scores
 
     def score_lmjm(self, query):
-        return 0
+        query_vector = self.vectorizer.transform([query]).toarray()
+        doc_scores = np.prod(self.lmjm_matrix ** query_vector, axis=1)
+
+        return doc_scores
 
     def score_bm25(self, query):
         return 0

@@ -2,7 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="525c7247-eca6-4a59-9ea0-fdda87d51273" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/RI-MiniProject.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/RI-MiniProject.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.ipynb_checkpoints/Mini-Project-checkpoint.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/.ipynb_checkpoints/Mini-Project-checkpoint.ipynb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Mini-Project.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/Mini-Project.ipynb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RetrievalModelsMatrix.py" beforeDir="false" afterPath="$PROJECT_DIR$/RetrievalModelsMatrix.py" afterDir="false" />
     </list>
@@ -35,6 +38,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
