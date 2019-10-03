@@ -40,7 +40,7 @@ class RetrievalModelsMatrix:
     def score_lmd(self, query):
         query_vector = self.vectorizer.transform([query]).toarray()
         indexes = np.where(query_vector[0] != 0)[0]
-        
+
         return doc_scores
 
     def score_lmjm(self, query):
