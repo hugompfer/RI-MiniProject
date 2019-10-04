@@ -5,91 +5,112 @@ from sklearn.feature_extraction.text import CountVectorizer
 import RetrievalModelsMatrix as models
 import json
 
+
 class Statistics:
 
-    def __init__(self, cranfield, bigrams):
-        self.bigrams = bigrams
+    def __init__(self, cranfield):
+        self.models_names = ["VSM", "LMD", "LMJM"]
+        self.mius = np.linspace(0.1, 0.99, num=2)
+        self.lmds = np.linspace(100, 1000, num=2)
         self.cranfield = cranfield
-        self.vectorizer = self.__init_vectorizer()
-        self.models_to_calculate = self.__load_settings()
+        self.vectorizer_unigram = CountVectorizer()
+        self.vectorizer_bigram = CountVectorizer(ngram_range=(1, 2), token_pattern=r'\b\w+\b',
+                                                 min_df=1, stop_words={'the', 'is'})
+
         # Tokenize, stem and remove stop words
         self.corpus = parser.stemCorpus(cranfield.corpus_cranfield['abstract'])
 
         # Create the model
         # Compute the term frequencies matrix and the model statistics
-        self.tf_cranfield = self.vectorizer.fit_transform(self.corpus).toarray()
-        self.models = models.RetrievalModelsMatrix(self.tf_cranfield, self.vectorizer)
-        self.scoreModels = {
-            "VSM": self.models.score_vsm,
-            "LMD": self.models.score_lmd,
-            "LMJM": self.models.score_lmjm,
-            "BM25": self.models.score_bm25
+        self.tf_cranfield_uni = self.vectorizer_unigram.fit_transform(self.corpus).toarray()
+        self.tf_cranfield_big = self.vectorizer_bigram.fit_transform(self.corpus).toarray()
+        self.models_uni = models.RetrievalModelsMatrix(self.tf_cranfield_uni, self.vectorizer_unigram, self.mius, self.lmds)
+        self.models_big = models.RetrievalModelsMatrix(self.tf_cranfield_big, self.vectorizer_bigram, self.mius, self.lmds)
+
+
+    def calculate_models_scores(self, models, query):
+        return {
+            "VSM": models.score_vsm(query),
+            "LMD": models.score_lmd(query),
+            "LMJM": models.score_lmjm(query),
         }
 
-    def __load_settings(self):
-        f = open('settings.json')
-        data = json.load(f)
-        f.close()
-        return data
+    def __create_statistics_dic(self):
+        return {
+            "precision_vsm": [],
+            "recall": [],
+            "map_vsm": 0,
+        }
 
-    def __init_vectorizer(self):
-        if not self.bigrams:
-            return CountVectorizer()
-        else:
-            return CountVectorizer(ngram_range=(1, 2), token_pattern=r'\b\w+\b',
-                                   min_df=1, stop_words={'the', 'is'})
+    def __create_param_dic(self, results_dic, param):
+        results_dic[param] = self.__create_statistics_dic()
+
+    def create_result_dic(self):
+        results = {
+            "uni": dict(),
+            "big": dict()
+        }
+
+        for model_score in self.models_names:
+            if model_score == "VSM":
+                self.__create_param_dic(results["uni"], model_score)
+                self.__create_param_dic(results["big"], model_score)
+            elif model_score == "LMD" or model_score == "LMJM":
+                results["uni"][model_score] = dict()
+                results["big"][model_score] = dict()
+                params = self.mius if model_score == "LMD" else self.lmds
+                for param in params:
+                    self.__create_param_dic(results["uni"][model_score], param)
+                    self.__create_param_dic(results["big"][model_score], param)
+        return results
+
+    def __update_statistic(self, average_precision, precision, recall, result):
+        result["precision_vsm"].append(precision)
+        result["map_vsm"] = result["map_vsm"] + average_precision
+        result["recall"] = recall
+
+    def __update_statistics_scores(self, scores, results, i):
+        models = scores.keys()
+        cranfield_size = self.cranfield.num_queries
+        for key in models:
+            i = 1
+            model_score = scores[key]
+            if key == "VSM":
+                [average_precision, precision, recall, thresholds] = self.cranfield.eval(model_score, i)
+                self.__update_statistic(average_precision, precision, recall, results[key])
+                if i == cranfield_size:
+                    results[key]["map_vsm"] = results[key]["map_vsm"] / cranfield_size
+            elif key == "LMD" or key == "LMJM":
+                for score_dic in model_score:
+                    [average_precision, precision, recall, thresholds] = self.cranfield.eval(score_dic["result"], i)
+                    self.__update_statistic(average_precision, precision, recall, results[key][score_dic["param"]])
+                    if i == cranfield_size:
+                        results[key][score_dic["param"]]["map_vsm"] = results[key][score_dic["param"]]["map_vsm"] / cranfield_size
+
 
     def calculate(self):
-        self.models_to_calculate = self.__load_settings()
+        i = 1
+        results = self.create_result_dic()
 
-        for model in self.models_to_calculate.keys():
-            model = model.upper()
-            i = 1
-            precision_vsm = []
-            average_precisions = []
-            map_vsm = 0
+        for query in self.cranfield.queries:
+            # Parse the query and compute the document scores
+            stem_query = parser.stemSentence(query)
 
-            for query in self.cranfield.queries:
-                # Parse the query and compute the document scores
-                stem_query = parser.stemSentence(query)
-                scores = self.get_score(model, stem_query)
+            scores_uni = self.calculate_models_scores(self.models_uni, stem_query)
+            score_big = self.calculate_models_scores(self.models_big, stem_query)
 
-                if isinstance(scores,dict):
-                    for param in scores.keys():
-                        [average_precision, precision, recall, thresholds] = self.cranfield.eval(scores.keys()[param], i)
+            self.__update_statistics_scores(scores_uni, results["uni"], i)
+            self.__update_statistics_scores(score_big, results["big"], i)
 
+            i = i + 1
 
-                # Do the evaluation
-                [average_precision, precision, recall, thresholds] = self.cranfield.eval(scores, i)
-                map_vsm = map_vsm + average_precision
-                precision_vsm.append(precision)
-
-                average_precisions.append([i, average_precision])
-                i = i + 1
-
-            map_vsm = map_vsm / self.cranfield.num_queries
-
-        return precision_vsm, recall, map_vsm, average_precisions
-
-    def get_score(self, model, query):
-        scores = {}
-        if model == 'VSM':
-            return self.scoreModels[model](query)
-        elif model == 'LMD' or model == 'LMJM':
-            for param in self.models_to_calculate[model].params:
-                scores[param] = self.scoreModels[model](query, param)
-        else:
-            b_params, k_params = self.models_to_calculate[model]["params"].keys()
-            for b in b_params:
-                for k in k_params:
-                    scores[b+"_"+k] = self.scoreModels[model](query, k, b)
-        return scores
+        return results
 
     def plot_average_precision_table(self, average_precisions):
         columns = ('Query Id', 'Average precision')
         table = plt.table(cellText=average_precisions,
-                              colLabels=columns,
-                              loc='center')
+                          colLabels=columns,
+                          loc='center')
         table.set_fontsize(14)
         table.scale(1, 2)
         plt.show()

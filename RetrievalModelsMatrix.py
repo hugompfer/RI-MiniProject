@@ -2,7 +2,7 @@ import numpy as np
 
 class RetrievalModelsMatrix:
 
-    def __init__(self, tf, vectorizer):
+    def __init__(self, tf, vectorizer, mius, lmds):
         self.vectorizer = vectorizer
         self.tf = tf
         self.term_coll_freq = np.sum(tf, axis=0)
@@ -20,15 +20,27 @@ class RetrievalModelsMatrix:
         self.collection_size = np.sum(self.docLen)
         self.term_coll_freq_prob = np.divide(self.term_coll_freq , self.collection_size)
         self.term_doc_freq_prob = self.tf/np.array(self.docLen)[:, None]
-        miu = 0.5
-        self.lmd_matrix = (self.tf + miu * self.term_coll_freq_prob)/(np.reshape(self.docLen,[np.size(self.docLen),1])+miu)
+
+        self.lmd_matrixs = list(map(self.__lmd_function, mius))
 
         ## LMJM statistics
-        lmd = 500
-        self.lmjm_matrix = lmd * self.term_doc_freq_prob + (1 - lmd) * self.term_coll_freq_prob
+        self.lmjm_matrixs = list(map(self.__lmjm_function, lmds))
         
         ## BM25 statistics
 
+    def __create_matrix_dic(self, param, matrix):
+        return {
+            "param": param,
+            "matrix": matrix
+        }
+
+    def __lmd_function(self, miu):
+        matrix = (self.tf + miu * self.term_coll_freq_prob) / (np.reshape(self.docLen, [np.size(self.docLen), 1]) + miu)
+        return self.__create_matrix_dic(miu, matrix)
+
+    def __lmjm_function(self, lmd):
+        matrix = lmd * self.term_doc_freq_prob + (1 - lmd) * self.term_coll_freq_prob
+        return self.__create_matrix_dic(lmd, matrix)
 
     def score_vsm(self, query):
         query_vector = self.vectorizer.transform([query]).toarray()
@@ -40,15 +52,21 @@ class RetrievalModelsMatrix:
 
     def score_lmd(self, query):
         query_vector = self.vectorizer.transform([query]).toarray()
-        doc_scores = np.prod(self.lmd_matrix ** query_vector, axis=1)
+        doc_scores = map(lambda matrix_dic: {
+            "param": matrix_dic["param"],
+            "result": np.array(np.prod(matrix_dic["matrix"] ** query_vector, axis=1), dtype=np.ndarray)
+        }, self.lmd_matrixs)
 
-        return doc_scores
+        return list(doc_scores)
 
     def score_lmjm(self, query):
         query_vector = self.vectorizer.transform([query]).toarray()
-        doc_scores = np.prod(self.lmjm_matrix ** query_vector, axis=1)
+        doc_scores = map(lambda matrix_dic: {
+            "param": matrix_dic["param"],
+            "result": np.prod(matrix_dic["matrix"] ** query_vector, axis=1)
+        }, self.lmjm_matrixs)
 
-        return doc_scores
+        return list(doc_scores)
 
     def score_bm25(self, query):
         return 0
