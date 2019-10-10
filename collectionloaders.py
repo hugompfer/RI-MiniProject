@@ -56,4 +56,4 @@ class CranfieldTestBed:
             plt.plot(recall, precision_interpolated, color='r', alpha=1) # Interpolated precision-recall
             plt.plot(recall_11point, precision_11point, color='g', alpha=1) # 11-point interpolated precision-recall
 
-        return [average_precision, precision_11point, recall_11point, thresholds]
+        return [average_precision, precision_11point, recall_11point, precision[-10]]

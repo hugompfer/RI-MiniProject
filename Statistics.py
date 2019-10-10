@@ -76,13 +76,13 @@ class Statistics:
             i = 1
             model_score = scores[key]
             if key == "VSM":
-                [average_precision, precision, recall, thresholds] = self.cranfield.eval(model_score, i)
+                [average_precision, precision, recall, precision_at_10] = self.cranfield.eval(model_score, i)
                 self.__update_statistic(average_precision, precision, recall, results[key])
                 if i == cranfield_size:
                     results[key]["map_vsm"] = results[key]["map_vsm"] / cranfield_size
             elif key == "LMD" or key == "LMJM":
                 for score_dic in model_score:
-                    [average_precision, precision, recall, thresholds] = self.cranfield.eval(score_dic["result"], i)
+                    [average_precision, precision, recall, precision_at_10] = self.cranfield.eval(score_dic["result"], i)
                     self.__update_statistic(average_precision, precision, recall, results[key][score_dic["param"]])
                     if i == cranfield_size:
                         results[key][score_dic["param"]]["map_vsm"] = results[key][score_dic["param"]]["map_vsm"] / cranfield_size

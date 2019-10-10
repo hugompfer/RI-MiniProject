@@ -25,8 +25,7 @@ class RetrievalModelsMatrix:
 
         ## LMJM statistics
         self.lmjm_matrixs = list(map(self.__lmjm_function, lmds))
-        
-        ## BM25 statistics
+
 
     def __create_matrix_dic(self, param, matrix):
         return {
@@ -68,9 +67,20 @@ class RetrievalModelsMatrix:
 
         return list(doc_scores)
 
-    def score_bm25(self, query):
-        return 0
-
     def scoreRM3(self, query):
-        return 0
+
+        srank = np.sort(result)
+        threshold = srank[1]
+        top = result * (result > threshold)
+        r = term_doc_freq_prob * np.reshape(top, [-1, 1])
+        re = np.sum(r, axis=0)
+
+        sorted = np.sort(re)
+        t_w = sorted[2]
+        re = re * (re > t_w)
+
+        query_vector = vectorizer.transform([query]).toarray()
+        term_query_prob = query_vector / np.sum(query_vector, axis=1)
+
+        final_res = (1 - 0.2) * term_query_prob + (0.2) * re
 
