@@ -1,7 +1,6 @@
 import collectionloaders
 import Statistics
-import pandas as pd
-
+import pickle
 
 class Data:
 
@@ -27,10 +26,9 @@ class Data:
         }
 
     def save_data(self):
-        a = pd.Series(self.results).to_json(orient='values')
-        f = open("data.json", 'w')
-        f.write(a)
-        f.close()
+        with open('data.pickle', 'wb') as handle:
+            pickle.dump(self.results, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     def load_data(self):
-        self.results = pd.read_json('data.json')
+        with open('data.pickle', 'rb') as handle:
+            self.results = pickle.load(handle)
