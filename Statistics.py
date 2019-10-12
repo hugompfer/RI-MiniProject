@@ -71,8 +71,10 @@ class Statistics:
                 if model_score == "RM3":
                     for miu in self.mius:
                         results["uni"][model_score][miu] = dict()
+                        results["big"][model_score][miu] = dict()
                         for tt in self.term_thresholds:
                             self.__create_param_dic(results["uni"][model_score][miu], tt)
+                            self.__create_param_dic(results["big"][model_score][miu], tt)
         return results
 
     def __update_statistic(self, average_precision, precision, recall, precision_10, result):
