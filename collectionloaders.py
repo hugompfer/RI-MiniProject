@@ -35,10 +35,14 @@ class CranfieldTestBed:
         #print(idx_rel_docs)
 
         query_rel_docs = idx_rel_docs['docid']-1
-        #print(query_rel_docs)
 
         relv_judg_list = idx_rel_docs['rel']
         #print(relv_judg_list)
+        
+        rank = np.argsort(scores, axis = None)
+        top10 = rank[-10:]
+        true_pos= np.intersect1d(top10,query_rel_docs)
+        p10 = np.size(true_pos) / 10
 
         relev_judg_vector = np.zeros((self.num_docs,1))
         relev_judg_vector[query_rel_docs,0] = (relv_judg_list>0)
@@ -56,4 +60,4 @@ class CranfieldTestBed:
             plt.plot(recall, precision_interpolated, color='r', alpha=1) # Interpolated precision-recall
             plt.plot(recall_11point, precision_11point, color='g', alpha=1) # 11-point interpolated precision-recall
 
-        return [average_precision, precision_11point, recall_11point, precision[9]]
+        return [average_precision, precision_11point, recall_11point, p10]
